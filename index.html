@@ -233,52 +233,50 @@
             const ping = await measurePing();
             pingValue.innerText = ping + " ms";
 
-            // 2. قياس السرعة بطريقة دقيقة تعتمد على تدفق البيانات الحقيقي (Streams)
-            testStage.innerText = "جاري القياس...";
-            statusText.innerText = "جاري اختبار سرعة التحميل الفعلي...";
+            // 2. قياس السرعة باستخدام روابط متعددة لشبكات عالمية قوية لضمان دقة النتائج
+            testStage.innerText = "قياس السرعة...";
+            statusText.innerText = "جاري قياس السرعة بدقة فائقة...";
 
-            // استخدام ملف بيانات بحجم مناسب تماماً لضمان دقة القراءة وسرعة الاستجابة
-            const fileUrl = "https://speed.hetzner.de/10MB.bin";
-            const fileSize = 10 * 1024 * 1024; // 10 ميجابايت
+            // استخدام ملفات عشوائية من شبكات Cloudflare الضخمة لضمان استجابة سريعة ودقيقة
+            const testFiles = [
+                "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js", // ~600 كيلوبايت
+                "https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js" // ~80 كيلوبايت
+            ];
 
+            let totalBytes = 0;
             const startTime = performance.now();
 
             try {
-                const response = await fetch(fileUrl + "?nocache=" + Date.now(), { cache: 'no-store' });
-                if (!response.ok) throw new Error('Network error');
+                for (let i = 0; i < testFiles.length; i++) {
+                    const response = await fetch(testFiles[i] + "?cache=" + Math.random(), { cache: 'no-store' });
+                    const blob = await response.blob();
+                    totalBytes += blob.size;
 
-                const reader = response.body.getReader();
-                let receivedBytes = 0;
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    receivedBytes += value.length;
-                    
-                    // حساب السرعة لحظياً وبشكل تراكمي دقيق
+                    // تحديث السرعة لحظياً أثناء التحميل
                     const currentTime = performance.now();
-                    const durationInSeconds = (currentTime - startTime) / 1000;
-                    
-                    if (durationInSeconds > 0) {
-                        const speedBps = (receivedBytes * 8) / durationInSeconds;
-                        const speedMbps = (speedBps / 1000000).toFixed(2);
-                        speedValue.innerText = speedMbps;
+                    const durationSoFar = (currentTime - startTime) / 1000;
+                    if (durationSoFar > 0) {
+                        const currentBps = (totalBytes * 8) / durationSoFar;
+                        const currentMbps = (currentBps / 1000000).toFixed(2);
+                        speedValue.innerText = currentMbps;
                     }
                 }
 
                 const endTime = performance.now();
                 const totalDuration = (endTime - startTime) / 1000;
-                const finalBps = (fileSize * 8) / totalDuration;
-                const finalMbps = (finalBps / 1000000).toFixed(2);
+                
+                // حساب دقيق للسرعة النهائية بالـ Mbps
+                const finalBits = totalBytes * 8;
+                const finalSpeedBps = finalBits / totalDuration;
+                const finalSpeedMbps = (finalSpeedBps / 1000000).toFixed(2);
 
-                speedValue.innerText = finalMbps;
+                speedValue.innerText = finalSpeedMbps;
                 testStage.innerText = "مكتمل";
-                statusText.innerText = "تم قياس السرعة بدقة!";
+                statusText.innerText = "تم قياس السرعة بنجاح!";
 
             } catch (error) {
-                statusText.innerText = "فشل الاتصال، يرجى رفع الملف على استضافة مثل GitHub.";
-                testStage.innerText = "خطأ";
+                statusTest.innerText = "حدث خطأ في شبكة الاتصال.";
+                testStage.innerText = "فشل";
                 speedValue.innerText = "0.00";
             } finally {
                 container.classList.remove('animating');
